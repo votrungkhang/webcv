@@ -1,0 +1,1131 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>CV Builder - Quản lý nhiều CV</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700;800&family=Source+Sans+Pro:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #0D7C66;
+            --primary-light: #14A085;
+            --primary-dark: #095C4B;
+            --accent: #E8B931;
+            --bg: #F0F2F5;
+            --card: #FFFFFF;
+            --text: #1A1A2E;
+            --text-muted: #6B7280;
+            --border: #E5E7EB;
+            --sidebar-bg: #111827;
+            --sidebar-text: #D1D5DB;
+            --danger: #DC2626;
+            --success: #16A34A;
+            --submit: #E85D04;
+            --submit-light: #F48C06;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+        body { font-family: 'Source Sans Pro', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; overflow-x: hidden; }
+
+        /* ===== Top Bar ===== */
+        .top-bar {
+            background: var(--sidebar-bg); height: 52px;
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 0 12px; position: fixed; top: 0; left: 0; right: 0;
+            z-index: 100; box-shadow: 0 2px 12px rgba(0,0,0,0.3);
+        }
+        .top-left { display: flex; align-items: center; gap: 10px; }
+        .logo { font-family: 'Playfair Display', serif; font-size: 18px; font-weight: 800; color: #fff; }
+        .logo span { color: var(--accent); }
+        .menu-toggle {
+            width: 36px; height: 36px; border-radius: 8px; border: none;
+            background: rgba(255,255,255,0.08); color: #fff; font-size: 16px;
+            cursor: pointer; display: none; align-items: center; justify-content: center;
+        }
+        .top-actions { display: flex; gap: 6px; align-items: center; }
+        .btn {
+            padding: 7px 12px; border-radius: 7px; border: none;
+            font-size: 13px; font-weight: 600; cursor: pointer;
+            transition: all 0.15s ease;
+            display: inline-flex; align-items: center; gap: 5px;
+            font-family: 'Source Sans Pro', sans-serif; white-space: nowrap;
+        }
+        .btn:active { transform: scale(0.95); }
+        .btn-outline { background: transparent; color: #fff; border: 1.5px solid rgba(255,255,255,0.25); }
+        .btn-outline:hover { border-color: #fff; background: rgba(255,255,255,0.08); }
+        .btn-primary { background: var(--primary); color: #fff; }
+        .btn-primary:hover { background: var(--primary-light); }
+        .btn-accent { background: var(--accent); color: #111; }
+        .btn-icon {
+            width: 36px; height: 36px; padding: 0;
+            display: inline-flex; align-items: center; justify-content: center;
+            border-radius: 8px; border: none; background: rgba(255,255,255,0.08);
+            color: #fff; font-size: 14px; cursor: pointer;
+        }
+        .btn-icon:active { transform: scale(0.92); }
+        .btn-label { display: inline; }
+
+        /* ===== CV Tabs Bar ===== */
+        .cv-tabs-bar {
+            background: var(--card); height: 48px;
+            display: flex; align-items: center;
+            padding: 0 12px; gap: 6px;
+            position: fixed; top: 52px; left: 0; right: 0;
+            z-index: 99; border-bottom: 1px solid var(--border);
+            overflow-x: auto; overflow-y: hidden;
+            -webkit-overflow-scrolling: touch;
+            scrollbar-width: none;
+        }
+        .cv-tabs-bar::-webkit-scrollbar { display: none; }
+
+        .cv-tab {
+            display: flex; align-items: center; gap: 6px;
+            padding: 6px 14px; border-radius: 8px;
+            border: 1.5px solid var(--border); background: #fff;
+            font-size: 13px; font-weight: 600; color: var(--text);
+            cursor: pointer; white-space: nowrap; flex-shrink: 0;
+            transition: all 0.15s ease; position: relative;
+        }
+        .cv-tab:hover { border-color: var(--primary); color: var(--primary); }
+        .cv-tab.active {
+            background: var(--primary); color: #fff;
+            border-color: var(--primary);
+            box-shadow: 0 2px 8px rgba(13,124,102,0.3);
+        }
+        .cv-tab.empty { border-style: dashed; color: var(--text-muted); }
+        .cv-tab.empty:hover { border-color: var(--primary); color: var(--primary); }
+        .cv-tab.empty.active { border-style: solid; }
+
+        .cv-tab-num {
+            width: 20px; height: 20px; border-radius: 50%;
+            background: rgba(13,124,102,0.1); color: var(--primary);
+            font-size: 11px; font-weight: 700;
+            display: flex; align-items: center; justify-content: center;
+            flex-shrink: 0;
+        }
+        .cv-tab.active .cv-tab-num { background: rgba(255,255,255,0.2); color: #fff; }
+        .cv-tab.empty .cv-tab-num { background: #F3F4F6; color: var(--text-muted); }
+        .cv-tab.empty.active .cv-tab-num { background: rgba(255,255,255,0.2); color: #fff; }
+
+        .cv-tab-name { max-width: 120px; overflow: hidden; text-overflow: ellipsis; }
+
+        .cv-tab .tab-edit-btn, .cv-tab .tab-del-btn {
+            width: 16px; height: 16px; border-radius: 50%;
+            border: none; background: rgba(0,0,0,0.08);
+            color: var(--text-muted); font-size: 8px;
+            cursor: pointer; display: none;
+            align-items: center; justify-content: center;
+            flex-shrink: 0; transition: all 0.12s;
+        }
+        .cv-tab:hover .tab-edit-btn, .cv-tab:hover .tab-del-btn { display: flex; }
+        .cv-tab .tab-del-btn:hover { background: var(--danger); color: #fff; }
+        .cv-tab .tab-edit-btn:hover { background: var(--primary); color: #fff; }
+        .cv-tab.active .tab-edit-btn, .cv-tab.active .tab-del-btn { background: rgba(255,255,255,0.15); color: rgba(255,255,255,0.7); }
+        .cv-tab.active .tab-del-btn:hover { background: var(--danger); color: #fff; }
+        .cv-tab.active .tab-edit-btn:hover { background: #fff; color: var(--primary); }
+
+        .cv-tabs-spacer { flex: 1; min-width: 8px; }
+
+        /* ===== Submit FAB ===== */
+        .submit-cv-fab {
+            position: fixed; bottom: 28px; right: 28px; z-index: 90;
+            background: linear-gradient(135deg, var(--submit), var(--submit-light));
+            color: #fff; border: none; border-radius: 50px;
+            padding: 14px 28px; font-size: 15px; font-weight: 700;
+            font-family: 'Source Sans Pro', sans-serif; cursor: pointer;
+            display: flex; align-items: center; gap: 10px;
+            box-shadow: 0 6px 24px rgba(232,93,4,0.4), 0 2px 8px rgba(232,93,4,0.2);
+            transition: all 0.25s cubic-bezier(0.22, 0.61, 0.36, 1);
+            animation: fabBounce 0.6s ease 1s both;
+        }
+        .submit-cv-fab:hover { transform: translateY(-3px) scale(1.03); box-shadow: 0 10px 36px rgba(232,93,4,0.5); }
+        .submit-cv-fab:active { transform: translateY(0) scale(0.97); }
+        .submit-cv-fab .fab-pulse {
+            position: absolute; top: -2px; right: -2px;
+            width: 12px; height: 12px; background: var(--success);
+            border-radius: 50%; border: 2px solid #fff;
+            animation: fabPulse 2s infinite;
+        }
+        @keyframes fabBounce {
+            0% { opacity: 0; transform: translateY(30px) scale(0.8); }
+            60% { transform: translateY(-5px) scale(1.05); }
+            100% { opacity: 1; transform: translateY(0) scale(1); }
+        }
+        @keyframes fabPulse { 0%, 100% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.5); opacity: 0.5; } }
+
+        /* ===== Main Layout ===== */
+        .main-layout { display: flex; margin-top: 100px; min-height: calc(100vh - 100px); }
+
+        /* ===== Sidebar ===== */
+        .sidebar {
+            width: 260px; min-width: 260px; background: var(--card);
+            border-right: 1px solid var(--border); padding: 16px 0;
+            overflow-y: auto; height: calc(100vh - 100px); position: sticky; top: 100px;
+        }
+        .sidebar-section { padding: 0 12px; margin-bottom: 4px; }
+        .sidebar-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.2px; color: var(--text-muted); padding: 6px 10px; }
+        .sidebar-item {
+            display: flex; align-items: center; gap: 9px;
+            padding: 9px 10px; border-radius: 7px; cursor: pointer;
+            transition: all 0.12s ease; font-size: 13px; font-weight: 500;
+            color: var(--text); border: none; background: none; width: 100%; text-align: left;
+        }
+        .sidebar-item:hover { background: #F3F4F6; }
+        .sidebar-item.active { background: var(--primary); color: #fff; }
+        .sidebar-item.active i { color: #fff; }
+        .sidebar-item i { width: 16px; text-align: center; color: var(--text-muted); font-size: 13px; }
+        .sidebar-divider { height: 1px; background: var(--border); margin: 8px 12px; }
+
+        /* ===== Drawer ===== */
+        .drawer-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 150; display: none; opacity: 0; transition: opacity 0.25s ease; }
+        .drawer-overlay.show { display: block; opacity: 1; }
+        .drawer {
+            position: fixed; top: 0; left: 0; bottom: 0;
+            width: 280px; max-width: 85vw; background: var(--card); z-index: 160;
+            transform: translateX(-100%);
+            transition: transform 0.3s cubic-bezier(0.22, 0.61, 0.36, 1);
+            overflow-y: auto; padding-top: 16px;
+        }
+        .drawer.open { transform: translateX(0); }
+        .drawer-header { display: flex; justify-content: space-between; align-items: center; padding: 8px 16px 16px; border-bottom: 1px solid var(--border); margin-bottom: 8px; }
+        .drawer-header .logo { font-size: 20px; }
+        .drawer-close { width: 32px; height: 32px; border-radius: 8px; border: none; background: #F3F4F6; cursor: pointer; font-size: 14px; color: var(--text-muted); display: flex; align-items: center; justify-content: center; }
+
+        /* ===== CV Area ===== */
+        .cv-area {
+            flex: 1; padding: 24px; display: flex;
+            justify-content: center; align-items: flex-start;
+            overflow-y: auto; height: calc(100vh - 100px);
+            background: var(--bg);
+            background-image: radial-gradient(circle at 20% 30%, rgba(13,124,102,0.04) 0%, transparent 50%), radial-gradient(circle at 80% 70%, rgba(232,185,49,0.04) 0%, transparent 50%);
+        }
+        .cv-paper {
+            width: 794px; min-height: 1123px; background: #fff;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.1), 0 1px 4px rgba(0,0,0,0.06);
+            border-radius: 4px; overflow: hidden; position: relative;
+            transition: box-shadow 0.3s ease; transform-origin: top center;
+        }
+
+        /* ===== CV Header ===== */
+        .cv-header {
+            background: var(--primary); color: #fff;
+            padding: 32px 36px 24px; display: flex; gap: 20px; align-items: center;
+            position: relative; overflow: hidden;
+        }
+        .cv-header::before { content: ''; position: absolute; top: -40px; right: -40px; width: 160px; height: 160px; border-radius: 50%; background: rgba(255,255,255,0.06); }
+        .cv-header::after { content: ''; position: absolute; bottom: -50px; right: 50px; width: 100px; height: 100px; border-radius: 50%; background: rgba(255,255,255,0.04); }
+        .cv-avatar { width: 90px; height: 90px; border-radius: 50%; border: 3px solid rgba(255,255,255,0.4); object-fit: cover; flex-shrink: 0; overflow: hidden; position: relative; z-index: 1; cursor: default; }
+        .cv-avatar img { width: 100%; height: 100%; object-fit: cover; display: block; }
+        .avatar-upload-overlay { position: absolute; inset: 0; border-radius: 50%; background: rgba(0,0,0,0.5); display: none; align-items: center; justify-content: center; color: #fff; font-size: 18px; z-index: 2; }
+        .cv-paper.editing .cv-avatar { cursor: pointer; }
+        .cv-paper.editing .cv-avatar:hover .avatar-upload-overlay { display: flex; }
+        #avatarInput { display: none; }
+        .cv-header-info { flex: 1; position: relative; z-index: 1; }
+        .cv-name { font-family: 'Playfair Display', serif; font-size: 28px; font-weight: 800; margin-bottom: 2px; line-height: 1.2; }
+        .cv-title { font-size: 15px; font-weight: 400; opacity: 0.85; margin-bottom: 10px; }
+        .cv-contact-row { display: flex; flex-wrap: wrap; gap: 10px 14px; font-size: 12px; opacity: 0.9; }
+        .cv-contact-item { display: flex; align-items: center; gap: 4px; }
+        .cv-contact-item i { font-size: 11px; opacity: 0.7; }
+
+        /* ===== CV Body ===== */
+        .cv-body { padding: 24px 36px 32px; display: grid; grid-template-columns: 1fr 240px; gap: 24px; }
+        .cv-main { min-width: 0; }
+        .cv-section { margin-bottom: 20px; }
+        .cv-section:last-child { margin-bottom: 0; }
+        .cv-section-title { font-family: 'Playfair Display', serif; font-size: 15px; font-weight: 700; color: var(--primary); text-transform: uppercase; letter-spacing: 0.8px; padding-bottom: 6px; border-bottom: 2px solid var(--primary); margin-bottom: 12px; display: flex; align-items: center; gap: 7px; }
+        .cv-section-title i { font-size: 13px; }
+        .cv-experience-item { margin-bottom: 16px; position: relative; padding-left: 14px; border-left: 2px solid var(--border); }
+        .cv-experience-item::before { content: ''; position: absolute; left: -5px; top: 5px; width: 8px; height: 8px; border-radius: 50%; background: var(--primary); }
+        .cv-exp-header { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 1px; gap: 8px; }
+        .cv-exp-position { font-size: 14px; font-weight: 700; color: var(--text); }
+        .cv-exp-date { font-size: 11px; color: var(--text-muted); white-space: nowrap; flex-shrink: 0; }
+        .cv-exp-company { font-size: 12px; color: var(--primary); font-weight: 600; margin-bottom: 5px; }
+        .cv-exp-desc { font-size: 12.5px; color: #444; line-height: 1.6; }
+        .cv-exp-desc ul { padding-left: 14px; margin: 3px 0; }
+        .cv-exp-desc li { margin-bottom: 1px; }
+        .cv-education-item { margin-bottom: 12px; }
+        .cv-edu-school { font-size: 14px; font-weight: 700; }
+        .cv-edu-major { font-size: 12px; color: var(--primary); font-weight: 600; }
+        .cv-edu-date { font-size: 11px; color: var(--text-muted); }
+        .cv-objective { font-size: 13px; line-height: 1.7; color: #444; }
+        .cv-skill-item { margin-bottom: 10px; }
+        .cv-skill-name { font-size: 12px; font-weight: 600; margin-bottom: 3px; display: flex; justify-content: space-between; }
+        .cv-skill-bar { height: 5px; background: #E5E7EB; border-radius: 3px; overflow: hidden; }
+        .cv-skill-fill { height: 100%; background: linear-gradient(90deg, var(--primary), var(--primary-light)); border-radius: 3px; transition: width 0.4s ease; }
+        .cv-lang-item { display: flex; justify-content: space-between; align-items: center; margin-bottom: 7px; font-size: 12px; }
+        .cv-lang-level { font-size: 11px; color: var(--primary); font-weight: 600; background: rgba(13,124,102,0.08); padding: 2px 7px; border-radius: 4px; }
+        .cv-hobby-item { display: inline-block; background: rgba(13,124,102,0.08); color: var(--primary-dark); font-size: 11px; font-weight: 600; padding: 3px 9px; border-radius: 20px; margin: 0 3px 5px 0; }
+        .cv-ref-item { margin-bottom: 10px; }
+        .cv-ref-name { font-size: 12px; font-weight: 700; }
+        .cv-ref-role { font-size: 11px; color: var(--text-muted); }
+        .cv-ref-contact { font-size: 11px; color: var(--primary); }
+
+        /* ===== Chế độ chỉnh sửa ===== */
+        .cv-paper.editing .editable { outline: 1.5px dashed rgba(13,124,102,0.4); outline-offset: 2px; border-radius: 3px; cursor: text; transition: outline-color 0.2s, background 0.2s; padding: 1px 3px; margin: -1px -3px; }
+        .cv-paper.editing .editable:hover { outline-color: var(--primary); background: rgba(13,124,102,0.04); }
+        .cv-paper.editing .editable:focus { outline: 2px solid var(--primary); background: rgba(13,124,102,0.06); }
+        [contenteditable="true"] { outline: none; }
+        .skill-slider { width: 100%; margin-top: 3px; accent-color: var(--primary); cursor: pointer; }
+        .add-item-btn { display: inline-flex; align-items: center; gap: 4px; font-size: 11px; color: var(--primary); cursor: pointer; border: 1.5px dashed var(--primary); background: rgba(13,124,102,0.04); padding: 4px 10px; border-radius: 6px; font-weight: 600; transition: all 0.15s; margin-top: 6px; }
+        .add-item-btn:hover { background: var(--primary); color: #fff; }
+        .add-item-btn.hidden { display: none; }
+        .remove-item-btn { position: absolute; top: -2px; right: -6px; width: 20px; height: 20px; border-radius: 50%; background: var(--danger); color: #fff; border: none; font-size: 9px; cursor: pointer; display: none; align-items: center; justify-content: center; z-index: 5; transition: transform 0.12s; }
+        .remove-item-btn:hover { transform: scale(1.15); }
+        .cv-paper.editing .remove-item-btn { display: flex; }
+
+        /* ===== Edit Toolbar ===== */
+        .edit-toolbar { position: fixed; bottom: 0; left: 0; right: 0; background: var(--sidebar-bg); padding: 8px 12px; display: none; align-items: center; justify-content: center; gap: 6px; z-index: 150; box-shadow: 0 -4px 20px rgba(0,0,0,0.3); }
+        .edit-toolbar.show { display: flex; }
+        .edit-toolbar .btn { font-size: 12px; padding: 8px 10px; flex: 1; justify-content: center; max-width: 120px; }
+
+        /* ===== Submit Banner ===== */
+        .submit-cv-banner {
+            margin-top: 24px; background: linear-gradient(135deg, var(--submit) 0%, var(--submit-light) 50%, #FAA307 100%);
+            border-radius: 16px; padding: 28px 32px; display: flex; align-items: center;
+            justify-content: space-between; gap: 20px;
+            box-shadow: 0 4px 20px rgba(232,93,4,0.25); position: relative; overflow: hidden;
+            width: 794px; max-width: 100%;
+        }
+        .submit-cv-banner::before { content: ''; position: absolute; top: -30px; right: -30px; width: 120px; height: 120px; border-radius: 50%; background: rgba(255,255,255,0.1); }
+        .submit-cv-banner::after { content: ''; position: absolute; bottom: -20px; left: 40%; width: 80px; height: 80px; border-radius: 50%; background: rgba(255,255,255,0.06); }
+        .submit-banner-info { position: relative; z-index: 1; }
+        .submit-banner-info h3 { font-family: 'Playfair Display', serif; font-size: 20px; font-weight: 800; color: #fff; margin-bottom: 4px; }
+        .submit-banner-info p { font-size: 13px; color: rgba(255,255,255,0.85); line-height: 1.5; }
+        .submit-banner-btn { position: relative; z-index: 1; background: #fff; color: var(--submit); border: none; border-radius: 12px; padding: 14px 32px; font-size: 15px; font-weight: 700; font-family: 'Source Sans Pro', sans-serif; cursor: pointer; display: flex; align-items: center; gap: 8px; box-shadow: 0 4px 16px rgba(0,0,0,0.15); transition: all 0.2s ease; flex-shrink: 0; }
+        .submit-banner-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 24px rgba(0,0,0,0.2); }
+        .submit-banner-btn:active { transform: translateY(0) scale(0.97); }
+
+        /* ===== Modal chung ===== */
+        .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); backdrop-filter: blur(4px); z-index: 200; display: none; align-items: flex-end; justify-content: center; }
+        .modal-overlay.show { display: flex; }
+        .modal { background: #fff; border-radius: 16px 16px 0 0; width: 100%; max-width: 520px; max-height: 85vh; overflow-y: auto; box-shadow: 0 -8px 40px rgba(0,0,0,0.3); animation: slideUpMobile 0.3s ease; }
+        .modal-header { padding: 16px 20px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; background: #fff; z-index: 1; border-radius: 16px 16px 0 0; }
+        .modal-header h3 { font-family: 'Playfair Display', serif; font-size: 18px; font-weight: 700; }
+        .modal-close { width: 32px; height: 32px; border-radius: 8px; border: none; background: #F3F4F6; cursor: pointer; font-size: 14px; display: flex; align-items: center; justify-content: center; color: var(--text-muted); }
+        .modal-body { padding: 20px; }
+        .modal-footer { padding: 12px 20px; border-top: 1px solid var(--border); display: flex; justify-content: flex-end; gap: 8px; position: sticky; bottom: 0; background: #fff; }
+        .form-group { margin-bottom: 14px; }
+        .form-group label { display: block; font-size: 13px; font-weight: 600; color: var(--text); margin-bottom: 5px; }
+        .form-group label .required { color: var(--danger); }
+        .form-group input, .form-group textarea, .form-group select { width: 100%; padding: 10px 12px; border: 1.5px solid var(--border); border-radius: 8px; font-size: 15px; font-family: 'Source Sans Pro', sans-serif; color: var(--text); background: #fff; -webkit-appearance: none; }
+        .form-group input:focus, .form-group textarea:focus, .form-group select:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(13,124,102,0.1); }
+        .form-group input.error, .form-group select.error { border-color: var(--danger); box-shadow: 0 0 0 3px rgba(220,38,38,0.1); }
+        .form-group .error-msg { font-size: 11px; color: var(--danger); margin-top: 3px; display: none; }
+        .form-group .error-msg.show { display: block; }
+        .form-group textarea { resize: vertical; min-height: 70px; }
+        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .btn-submit-cv { background: linear-gradient(135deg, var(--submit), var(--submit-light)); color: #fff; border: none; border-radius: 10px; padding: 12px 28px; font-size: 15px; font-weight: 700; font-family: 'Source Sans Pro', sans-serif; cursor: pointer; display: flex; align-items: center; gap: 8px; transition: all 0.2s ease; }
+        .btn-submit-cv:hover { transform: translateY(-1px); box-shadow: 0 4px 16px rgba(232,93,4,0.4); }
+        .btn-submit-cv:active { transform: scale(0.97); }
+        .btn-submit-cv:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+        .submit-success { text-align: center; padding: 32px 20px; display: none; }
+        .submit-success.show { display: block; }
+        .submit-success-icon { width: 72px; height: 72px; border-radius: 50%; background: linear-gradient(135deg, var(--success), #22C55E); display: flex; align-items: center; justify-content: center; margin: 0 auto 16px; font-size: 32px; color: #fff; animation: successPop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+        @keyframes successPop { 0% { transform: scale(0); } 100% { transform: scale(1); } }
+        .submit-success h3 { font-size: 20px; font-weight: 700; margin-bottom: 6px; }
+        .submit-success p { font-size: 14px; color: var(--text-muted); line-height: 1.5; }
+        .submit-form { transition: opacity 0.3s; }
+        .submit-form.hidden { display: none; }
+
+        /* ===== Toast ===== */
+        .toast-container { position: fixed; top: 108px; left: 12px; right: 12px; z-index: 300; display: flex; flex-direction: column; gap: 6px; pointer-events: none; }
+        .toast { padding: 10px 16px; border-radius: 10px; font-size: 13px; font-weight: 500; color: #fff; display: flex; align-items: center; gap: 7px; box-shadow: 0 4px 16px rgba(0,0,0,0.2); animation: slideDown 0.3s ease, fadeOut 0.3s ease 2.5s forwards; pointer-events: auto; }
+        .toast-success { background: var(--success); }
+        .toast-info { background: var(--primary); }
+        .toast-error { background: var(--danger); }
+        .saving-indicator { display: none; align-items: center; gap: 5px; font-size: 12px; color: var(--accent); }
+        .saving-indicator.show { display: flex; }
+        .saving-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--accent); animation: pulse 0.8s infinite; }
+
+        @keyframes slideUpMobile { from { transform: translateY(100%); } to { transform: translateY(0); } }
+        @keyframes slideDown { from { opacity: 0; transform: translateY(-20px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes fadeOut { from { opacity: 1; } to { opacity: 0; } }
+        @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.5; } }
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #CBD5E1; border-radius: 2px; }
+
+        /* ===== DESKTOP ===== */
+        @media (min-width: 1024px) {
+            .menu-toggle { display: none !important; }
+            .drawer, .drawer-overlay { display: none !important; }
+            .modal-overlay { align-items: center; }
+            .modal { border-radius: 16px; max-height: 85vh; animation: slideUpD 0.25s ease; }
+            @keyframes slideUpD { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+            .btn-label { display: inline; }
+            .toast-container { left: auto; right: 20px; width: auto; top: 108px; }
+            .submit-cv-fab { display: flex; }
+            .submit-cv-banner { display: flex; }
+        }
+        /* ===== TABLET ===== */
+        @media (min-width: 768px) and (max-width: 1023px) {
+            .sidebar { display: none; }
+            .menu-toggle { display: flex !important; }
+            .cv-paper { width: 680px; min-height: 962px; transform: scale(0.85); }
+            .btn-label { display: none; }
+            .submit-cv-fab { display: flex; bottom: 20px; right: 20px; padding: 12px 22px; font-size: 14px; }
+            .submit-cv-banner { display: none; }
+            .submit-cv-banner { width: 680px; }
+        }
+        /* ===== MOBILE ===== */
+        @media (max-width: 767px) {
+            .sidebar { display: none; }
+            .menu-toggle { display: flex !important; }
+            .top-bar { padding: 0 8px; height: 48px; }
+            .logo { font-size: 16px; }
+            .btn-label { display: none; }
+            .btn-icon { width: 34px; height: 34px; font-size: 13px; }
+            .btn { padding: 6px 8px; font-size: 12px; }
+            .cv-tabs-bar { top: 48px; height: 44px; padding: 0 8px; gap: 4px; }
+            .cv-tab { padding: 5px 10px; font-size: 12px; }
+            .cv-tab-num { width: 18px; height: 18px; font-size: 10px; }
+            .cv-tab-name { max-width: 80px; }
+            .main-layout { margin-top: 92px; }
+            .cv-area { padding: 0; height: calc(100vh - 92px); background: #fff; }
+            .cv-paper { width: 100%; min-height: auto; box-shadow: none; border-radius: 0; transform: none; }
+            .cv-header { padding: 20px 16px 16px; gap: 14px; }
+            .cv-avatar { width: 64px; height: 64px; border-width: 2px; }
+            .cv-name { font-size: 20px; }
+            .cv-title { font-size: 13px; margin-bottom: 8px; }
+            .cv-contact-row { gap: 6px 12px; font-size: 11px; }
+            .cv-body { padding: 16px; gap: 16px; grid-template-columns: 1fr; }
+            .cv-sidebar { border-top: 1px solid var(--border); padding-top: 16px; }
+            .cv-section { margin-bottom: 16px; }
+            .cv-section-title { font-size: 13px; margin-bottom: 10px; }
+            .cv-exp-position { font-size: 13px; }
+            .cv-exp-date { font-size: 10px; }
+            .cv-exp-company { font-size: 11px; }
+            .cv-exp-desc { font-size: 12px; }
+            .cv-edu-school { font-size: 13px; }
+            .cv-objective { font-size: 12px; }
+            .cv-skill-name { font-size: 11px; }
+            .cv-lang-item { font-size: 11px; }
+            .cv-hobby-item { font-size: 10px; padding: 2px 7px; }
+            .cv-ref-name { font-size: 11px; }
+            .edit-toolbar { flex-wrap: wrap; padding: 6px 8px; gap: 4px; border-radius: 16px 16px 0 0; bottom: 0; }
+            .submit-cv-fab { display: none; }
+            .submit-cv-banner { display: flex; width: 100%; border-radius: 0; margin-top: 0; padding: 20px 16px; flex-direction: column; text-align: center; gap: 14px; }
+            .submit-banner-info h3 { font-size: 17px; }
+            .submit-banner-info p { font-size: 12px; }
+            .submit-banner-btn { width: 100%; justify-content: center; padding: 14px 24px; border-radius: 12px; }
+            .modal { max-width: 100%; border-radius: 16px 16px 0 0; max-height: 90vh; }
+            .modal-body { padding: 16px; }
+            .form-group input, .form-group textarea, .form-group select { font-size: 16px; }
+            .form-row { grid-template-columns: 1fr; }
+            .toast-container { left: 8px; right: 8px; top: 100px; }
+            .toast { font-size: 12px; padding: 9px 14px; }
+        }
+
+        /* ===== Print ===== */
+        @media print {
+            body * { visibility: hidden; }
+            .cv-paper, .cv-paper * { visibility: visible; }
+            .cv-paper { position: absolute; left: 0; top: 0; width: 210mm; min-height: 297mm; box-shadow: none !important; border-radius: 0 !important; }
+            .cv-paper .remove-item-btn, .cv-paper .add-item-btn, .cv-paper .skill-slider, .cv-paper .avatar-upload-overlay { display: none !important; }
+            .top-bar, .sidebar, .edit-toolbar, .toast-container, .drawer, .drawer-overlay, .cv-tabs-bar, .submit-cv-fab, .submit-cv-banner { display: none !important; }
+            .cv-area { padding: 0 !important; overflow: visible !important; height: auto !important; background: none !important; }
+            .main-layout { margin-top: 0 !important; }
+            @page { margin: 0; size: A4; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- ===== Top Bar ===== -->
+<header class="top-bar">
+    <div class="top-left">
+        <button class="menu-toggle" id="menuToggle" aria-label="Mo menu"><i class="fas fa-bars"></i></button>
+        <div class="logo">CV<span>Builder</span></div>
+    </div>
+    <div class="top-actions">
+        <div class="saving-indicator" id="savingIndicator"><div class="saving-dot"></div><span>Luu...</span></div>
+        <button class="btn btn-outline" id="btnPreview" title="Xem trước" style="display:none;"><i class="fas fa-eye"></i><span class="btn-label"> Xem truoc</span></button>
+        <button class="btn btn-primary" id="btnEdit" title="Chỉnh sửa"><i class="fas fa-pen"></i><span class="btn-label"> Chinh sua</span></button>
+        <button class="btn-icon" id="btnSave" title="Lưu CV" style="background:var(--primary);"><i class="fas fa-save"></i></button>
+        <button class="btn-icon" id="btnDownload" title="Tải PDF"><i class="fas fa-download"></i></button>
+    </div>
+</header>
+
+<!-- ===== CV Tabs Bar ===== -->
+<div class="cv-tabs-bar" id="cvTabsBar"></div>
+
+<!-- ===== Mobile Drawer ===== -->
+<div class="drawer-overlay" id="drawerOverlay"></div>
+<nav class="drawer" id="drawer">
+    <div class="drawer-header">
+        <div class="logo">CV<span>Builder</span></div>
+        <button class="drawer-close" id="drawerClose" aria-label="Dong menu"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="sidebar-section"><div class="sidebar-label">Muc CV</div><button class="sidebar-item active" data-section="all"><i class="fas fa-file-alt"></i> Toan bo CV</button></div>
+    <div class="sidebar-divider"></div>
+    <div class="sidebar-section"><div class="sidebar-label">Thong tin ca nhan</div><button class="sidebar-item" data-section="personal"><i class="fas fa-user"></i> Thong tin lien he</button><button class="sidebar-item" data-section="objective"><i class="fas fa-bullseye"></i> Muc tieu nghe nghiep</button></div>
+    <div class="sidebar-divider"></div>
+    <div class="sidebar-section"><div class="sidebar-label">Kinh nghiem & Hoc van</div><button class="sidebar-item" data-section="experience"><i class="fas fa-briefcase"></i> Kinh nghiem lam viec</button><button class="sidebar-item" data-section="education"><i class="fas fa-graduation-cap"></i> Hoc van</button></div>
+    <div class="sidebar-divider"></div>
+    <div class="sidebar-section"><div class="sidebar-label">Ky nang & Khac</div><button class="sidebar-item" data-section="skills"><i class="fas fa-cogs"></i> Ky nang</button><button class="sidebar-item" data-section="languages"><i class="fas fa-language"></i> Ngoai ngu</button><button class="sidebar-item" data-section="hobbies"><i class="fas fa-heart"></i> So thich</button><button class="sidebar-item" data-section="references"><i class="fas fa-user-tie"></i> Nguoi tham chieu</button></div>
+    <div class="sidebar-divider"></div>
+    <div class="sidebar-section"><button class="sidebar-item" style="color:var(--danger);" id="btnResetDrawer"><i class="fas fa-undo" style="color:var(--danger);"></i> Dat lai CV nay</button></div>
+</nav>
+
+<!-- ===== Main Layout ===== -->
+<div class="main-layout">
+    <nav class="sidebar" id="sidebar">
+        <div class="sidebar-section"><div class="sidebar-label">Muc CV</div><button class="sidebar-item active" data-section="all"><i class="fas fa-file-alt"></i> Toan bo CV</button></div>
+        <div class="sidebar-divider"></div>
+        <div class="sidebar-section"><div class="sidebar-label">Thong tin ca nhan</div><button class="sidebar-item" data-section="personal"><i class="fas fa-user"></i> Thong tin lien he</button><button class="sidebar-item" data-section="objective"><i class="fas fa-bullseye"></i> Muc tieu nghe nghiep</button></div>
+        <div class="sidebar-divider"></div>
+        <div class="sidebar-section"><div class="sidebar-label">Kinh nghiem & Hoc van</div><button class="sidebar-item" data-section="experience"><i class="fas fa-briefcase"></i> Kinh nghiem lam viec</button><button class="sidebar-item" data-section="education"><i class="fas fa-graduation-cap"></i> Hoc van</button></div>
+        <div class="sidebar-divider"></div>
+        <div class="sidebar-section"><div class="sidebar-label">Ky nang & Khac</div><button class="sidebar-item" data-section="skills"><i class="fas fa-cogs"></i> Ky nang</button><button class="sidebar-item" data-section="languages"><i class="fas fa-language"></i> Ngoai ngu</button><button class="sidebar-item" data-section="hobbies"><i class="fas fa-heart"></i> So thich</button><button class="sidebar-item" data-section="references"><i class="fas fa-user-tie"></i> Nguoi tham chieu</button></div>
+        <div class="sidebar-divider"></div>
+        <div class="sidebar-section"><button class="sidebar-item" style="color:var(--danger);" id="btnReset"><i class="fas fa-undo" style="color:var(--danger);"></i> Dat lai CV nay</button></div>
+    </nav>
+
+    <main class="cv-area" id="cvArea">
+        <div>
+            <div class="cv-paper" id="cvPaper">
+                <div class="cv-header" id="sectionPersonal">
+                    <div class="cv-avatar" id="avatarWrapper">
+                        <img id="avatarImg" src="https://picsum.photos/seed/cv-avatar-pro/200/200.jpg" alt="Avatar">
+                        <div class="avatar-upload-overlay"><i class="fas fa-camera"></i></div>
+                        <input type="file" id="avatarInput" accept="image/*">
+                    </div>
+                    <div class="cv-header-info">
+                        <div class="cv-name editable" data-field="name">Nguyen Van An</div>
+                        <div class="cv-title editable" data-field="title">Frontend Developer</div>
+                        <div class="cv-contact-row">
+                            <span class="cv-contact-item"><i class="fas fa-phone"></i> <span class="editable" data-field="phone">0912 345 678</span></span>
+                            <span class="cv-contact-item"><i class="fas fa-envelope"></i> <span class="editable" data-field="email">an.nguyen@email.com</span></span>
+                            <span class="cv-contact-item"><i class="fas fa-map-marker-alt"></i> <span class="editable" data-field="address">Quan 1, TP. Ho Chi Minh</span></span>
+                            <span class="cv-contact-item"><i class="fab fa-linkedin"></i> <span class="editable" data-field="linkedin">linkedin.com/in/annguyen</span></span>
+                        </div>
+                    </div>
+                </div>
+                <div class="cv-body">
+                    <div class="cv-main">
+                        <div class="cv-section" id="sectionObjective">
+                            <div class="cv-section-title"><i class="fas fa-bullseye"></i> Muc tieu nghe nghiep</div>
+                            <div class="cv-objective editable" data-field="objective">Mong muon tro thanh Frontend Developer tai mot cong ty cong nghe hang dau, ung dung ky nang React, TypeScript de xay dung san pham mang trai nghiem tuyet voi cho nguoi dung.</div>
+                        </div>
+                        <div class="cv-section" id="sectionExperience">
+                            <div class="cv-section-title"><i class="fas fa-briefcase"></i> Kinh nghiem lam viec</div>
+                            <div id="experienceList"></div>
+                            <button class="add-item-btn hidden" onclick="addExperience()"><i class="fas fa-plus"></i> Them kinh nghiem</button>
+                        </div>
+                        <div class="cv-section" id="sectionEducation">
+                            <div class="cv-section-title"><i class="fas fa-graduation-cap"></i> Hoc van</div>
+                            <div id="educationList"></div>
+                            <button class="add-item-btn hidden" onclick="addEducation()"><i class="fas fa-plus"></i> Them hoc van</button>
+                        </div>
+                    </div>
+                    <aside class="cv-sidebar">
+                        <div class="cv-section" id="sectionSkills">
+                            <div class="cv-section-title"><i class="fas fa-cogs"></i> Ky nang</div>
+                            <div id="skillsList"></div>
+                            <button class="add-item-btn hidden" onclick="addSkill()"><i class="fas fa-plus"></i> Them ky nang</button>
+                        </div>
+                        <div class="cv-section" id="sectionLanguages">
+                            <div class="cv-section-title"><i class="fas fa-language"></i> Ngoai ngu</div>
+                            <div id="languagesList"></div>
+                            <button class="add-item-btn hidden" onclick="addLanguage()"><i class="fas fa-plus"></i> Them ngoai ngu</button>
+                        </div>
+                        <div class="cv-section" id="sectionHobbies">
+                            <div class="cv-section-title"><i class="fas fa-heart"></i> So thich</div>
+                            <div id="hobbiesContainer"></div>
+                            <button class="add-item-btn hidden" onclick="addHobby()"><i class="fas fa-plus"></i> Them so thich</button>
+                        </div>
+                        <div class="cv-section" id="sectionReferences">
+                            <div class="cv-section-title"><i class="fas fa-user-tie"></i> Nguoi tham chieu</div>
+                            <div id="referencesList"></div>
+                            <button class="add-item-btn hidden" onclick="addReference()"><i class="fas fa-plus"></i> Them nguoi tham chieu</button>
+                        </div>
+                    </aside>
+                </div>
+            </div>
+            <div class="submit-cv-banner" id="submitBanner">
+                <div class="submit-banner-info">
+                    <h3>San sang ung tuyen?</h3>
+                    <p>Gui CV nay den nha tuyen dung voi mot click.</p>
+                </div>
+                <button class="submit-banner-btn" onclick="openSubmitModal()"><i class="fas fa-paper-plane"></i> Nop CV ngay</button>
+            </div>
+        </div>
+    </main>
+</div>
+
+<button class="submit-cv-fab" id="submitFab" onclick="openSubmitModal()"><span class="fab-pulse"></span><i class="fas fa-paper-plane"></i> Nop CV</button>
+
+<div class="edit-toolbar" id="editToolbar">
+    <button class="btn btn-primary" onclick="openSectionModal()"><i class="fas fa-plus-square"></i> <span class="btn-label">Them </span></button>
+    <button class="btn btn-accent" onclick="saveCV()"><i class="fas fa-save"></i> <span class="btn-label">Luu</span></button>
+    <button class="btn btn-outline" onclick="toggleEdit()"><i class="fas fa-times"></i> <span class="btn-label">Thoat</span></button>
+</div>
+
+<!-- ===== Modal Nộp CV ===== -->
+<div class="modal-overlay" id="submitModalOverlay">
+    <div class="modal" id="submitModal" style="max-width:480px;">
+        <div class="modal-header"><h3><i class="fas fa-paper-plane" style="color:var(--submit);margin-right:6px;"></i> Nop CV</h3><button class="modal-close" onclick="closeSubmitModal()"><i class="fas fa-times"></i></button></div>
+        <div class="modal-body">
+            <div class="submit-form" id="submitForm">
+                <div class="form-group"><label>Vi tri ung tuyen <span class="required">*</span></label><input type="text" id="applyPosition" placeholder="VD: Frontend Developer"><div class="error-msg" id="errPosition">Vui long nhap vi tri</div></div>
+                <div class="form-group"><label>Ten cong ty <span class="required">*</span></label><input type="text" id="applyCompany" placeholder="VD: TechVina Co., Ltd"><div class="error-msg" id="errCompany">Vui long nhap ten cong ty</div></div>
+                <div class="form-row">
+                    <div class="form-group"><label>Email <span class="required">*</span></label><input type="email" id="applyEmail" placeholder="hr@company.com"><div class="error-msg" id="errEmail">Email khong hop le</div></div>
+                    <div class="form-group"><label>So dien thoai</label><input type="tel" id="applyPhone" placeholder="0901 234 567"></div>
+                </div>
+                <div class="form-group"><label>Loai hinh</label><select id="applyType"><option value="fulltime">Toan thoi gian</option><option value="parttime">Ban thoi gian</option><option value="remote">Remote</option><option value="intern">Thuc tap sinh</option><option value="freelance">Freelance</option></select></div>
+                <div class="form-group"><label>Loi nop</label><textarea id="applyNote" placeholder="Viet loi nop..." rows="3"></textarea></div>
+            </div>
+            <div class="submit-success" id="submitSuccess">
+                <div class="submit-success-icon"><i class="fas fa-check"></i></div>
+                <h3>Da nop CV thanh cong!</h3>
+                <p>CV da gui den <strong id="sentTo"></strong>.</p>
+                <div style="margin-top:20px;display:flex;gap:10px;justify-content:center;flex-wrap:wrap;">
+                    <button class="btn btn-primary" onclick="downloadPDF()"><i class="fas fa-download"></i> Tai PDF</button>
+                    <button class="btn btn-outline" onclick="closeSubmitModal()" style="color:var(--text);border-color:var(--border);">Dong</button>
+                </div>
+            </div>
+        </div>
+        <div class="modal-footer" id="submitFooter">
+            <button class="btn btn-outline" onclick="closeSubmitModal()" style="color:var(--text);border-color:var(--border);">Huy</button>
+            <button class="btn-submit-cv" id="btnDoSubmit" onclick="doSubmitCV()"><i class="fas fa-paper-plane"></i> Gui CV</button>
+        </div>
+    </div>
+</div>
+
+<!-- ===== Modal thêm mục ===== -->
+<div class="modal-overlay" id="modalOverlay">
+    <div class="modal" id="sectionModal">
+        <div class="modal-header"><h3 id="modalTitle">Them muc moi</h3><button class="modal-close" onclick="closeModal()"><i class="fas fa-times"></i></button></div>
+        <div class="modal-body" id="modalBody"></div>
+        <div class="modal-footer"><button class="btn btn-outline" onclick="closeModal()" style="color:var(--text);border-color:var(--border);">Huy</button><button class="btn btn-primary" id="modalSaveBtn" style="display:none;">Them</button></div>
+    </div>
+</div>
+
+<!-- ===== Modal đổi tên CV ===== -->
+<div class="modal-overlay" id="renameModalOverlay">
+    <div class="modal" id="renameModal" style="max-width:380px;">
+        <div class="modal-header"><h3>Doi ten CV</h3><button class="modal-close" onclick="closeRenameModal()"><i class="fas fa-times"></i></button></div>
+        <div class="modal-body">
+            <div class="form-group"><label>Ten CV</label><input type="text" id="renameInput" placeholder="Nhap ten CV moi..."></div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-outline" onclick="closeRenameModal()" style="color:var(--text);border-color:var(--border);">Huy</button>
+            <button class="btn btn-primary" onclick="doRename()"><i class="fas fa-check"></i> Xong</button>
+        </div>
+    </div>
+</div>
+
+<div class="toast-container" id="toastContainer"></div>
+
+<script>
+    // ===== Quản lý đa CV =====
+    const MAX_CVS = 5;
+    const STORAGE_PREFIX = 'cvBuilder_';
+    let currentCVIndex = 0;
+    let isEditing = false;
+    let renameTargetIndex = -1;
+
+    // 5 template CV khác nhau
+    function getCVTemplates() {
+        return [
+            {
+                _name: 'CV Frontend Developer',
+                name: 'Nguyen Van An', title: 'Frontend Developer',
+                phone: '0912 345 678', email: 'an.nguyen@email.com',
+                address: 'Quan 1, TP. Ho Chi Minh', linkedin: 'linkedin.com/in/annguyen',
+                objective: 'Mong muon tro thanh Frontend Developer tai mot cong ty cong nghe hang dau, ung dung ky nang React, TypeScript de xay dung san pham mang trai nghiem tuyet voi cho nguoi dung.',
+                experiences: [
+                    { position: 'Senior Frontend Developer', date: '01/2022 - Hien tai', company: 'Cong ty TNHH TechVina', desc: '<ul><li>Dau va phat trien he thong quan ly du an bang React + TypeScript</li><li>Toi uu hoa hieu suat, giam 40% thoi gian tai trang</li><li>Dan dat quy trinh Code Review va CI/CD cho doi ngu 8 nguoi</li></ul>' },
+                    { position: 'Frontend Developer', date: '06/2019 - 12/2021', company: 'StartUp JSC', desc: '<ul><li>Xay dung giao dien ung dung di dong bang React Native</li><li>Tich hop API va quan ly trang thai voi Redux</li></ul>' }
+                ],
+                education: [{ school: 'Dai hoc Bach Khoa TP.HCM', major: 'CNTT - He thong thong tin', date: '2015 - 2019 | GPA: 3.5/4.0' }],
+                skills: [{ name: 'React / Next.js', pct: 90 }, { name: 'TypeScript', pct: 85 }, { name: 'HTML / CSS / Tailwind', pct: 95 }, { name: 'Git / CI-CD', pct: 80 }, { name: 'Node.js (Basic)', pct: 60 }],
+                languages: [{ name: 'Tieng Anh', level: 'IELTS 7.0' }, { name: 'Tieng Nhat', level: 'N3' }],
+                hobbies: ['Doc sach', 'Chay bo', 'Open source', 'Chup anh'],
+                references: [{ name: 'Tran Minh Duc', role: 'Tech Lead - TechVina', contact: 'ductm@techvina.com' }],
+                avatar: 'https://picsum.photos/seed/cv-avatar-pro/200/200.jpg'
+            },
+            {
+                _name: 'CV Backend Developer',
+                name: 'Le Thanh Binh', title: 'Backend Developer',
+                phone: '0987 654 321', email: 'binh.le@email.com',
+                address: 'Cau Giay, Ha Noi', linkedin: 'linkedin.com/in/binhle',
+                objective: 'Tim kiem vi tri Backend Developer de ap dung kien thuc Java, Spring Boot va microservices vao xay dung he thong phuc vu trieu luong nguoi dung.',
+                experiences: [
+                    { position: 'Backend Developer', date: '03/2021 - Hien tai', company: 'FPT Software', desc: '<ul><li>Thiet ke va phat trien microservices xu ly giao dich tai chinh</li><li>Toi uu hoa query SQL, giam 60% thoi gian phan hoi</li><li>Trien khai kafka cho xu ly message bat dong bo</li></ul>' },
+                    { position: 'Junior Developer', date: '08/2018 - 02/2021', company: 'VNG Corporation', desc: '<ul><li>Phat trien RESTful API cho ung dung Zalo Pay</li><li>Viet unit test va integration test</li></ul>' }
+                ],
+                education: [{ school: 'Dai hoc Cong nghe Ha Noi', major: 'Khoa hoc May tinh', date: '2014 - 2018 | GPA: 3.7/4.0' }],
+                skills: [{ name: 'Java / Spring Boot', pct: 92 }, { name: 'Python / Django', pct: 75 }, { name: 'PostgreSQL / MongoDB', pct: 88 }, { name: 'Docker / Kubernetes', pct: 78 }, { name: 'Kafka / RabbitMQ', pct: 70 }],
+                languages: [{ name: 'Tieng Anh', level: 'TOEIC 890' }],
+                hobbies: ['Choi co vua', 'Hoc AI/ML', 'Dien dan StackOverflow'],
+                references: [{ name: 'Pham Hoang Hai', role: 'CTO - FPT Software', contact: 'hai.pham@fpt.com' }],
+                avatar: 'https://picsum.photos/seed/cv-backend-dev/200/200.jpg'
+            },
+            {
+                _name: 'CV UI/UX Designer',
+                name: 'Tran Mai Linh', title: 'UI/UX Designer',
+                phone: '0903 456 789', email: 'linh.tran@email.com',
+                address: 'Quan 3, TP. Ho Chi Minh', linkedin: 'linkedin.com/in/linhtran',
+                objective: 'Muc tieu trinh bay lai su sang tao trong thiet ke san pham digital, mang den trai nghiem nguoi dung tuyet voi thong qua giao dien truc quan va than thien.',
+                experiences: [
+                    { position: 'Senior UI/UX Designer', date: '01/2022 - Hien tai', company: 'Sendo Vietnam', desc: '<ul><li>Thiet ke lai giao dien ung dung di dong tang 25% luot mua hang</li><li>Xay dung Design System cho toan he sinh thai san pham</li><li>Dan dat quy trinh User Research va Usability Testing</li></ul>' },
+                    { position: 'UI Designer', date: '06/2019 - 12/2021', company: 'Agency DigiBird', desc: '<ul><li>Thiet ke UI cho 20+ project khach hang doanh nghiep</li><li>Hop tac voi dev team de dam bao chuyen doi design chinh xac</li></ul>' }
+                ],
+                education: [{ school: 'Dai hoc Hoa Binh', major: 'Thiet ke Do hoa', date: '2015 - 2019 | GPA: 3.6/4.0' }],
+                skills: [{ name: 'Figma', pct: 95 }, { name: 'Adobe XD / PS', pct: 90 }, { name: 'Prototyping', pct: 85 }, { name: 'User Research', pct: 80 }, { name: 'Design System', pct: 88 }],
+                languages: [{ name: 'Tieng Anh', level: 'IELTS 6.5' }, { name: 'Tieng Han', level: 'TOPIK 2' }],
+                hobbies: ['Ve minh hoa', 'Nhin netflix', 'Di trien lam nghe thuat'],
+                references: [{ name: 'Nguyen Thi Huong', role: 'Product Manager - Sendo', contact: 'huong.nt@sendo.vn' }],
+                avatar: 'https://picsum.photos/seed/cv-uiux-designer/200/200.jpg'
+            },
+            {
+                _name: 'CV Marketing Specialist',
+                name: 'Pham Quoc Huy', title: 'Digital Marketing Specialist',
+                phone: '0978 111 222', email: 'huy.pham@email.com',
+                address: 'Thu Duc, TP. Ho Chi Minh', linkedin: 'linkedin.com/in/huypham',
+                objective: 'Ung dung ky nang Digital Marketing de tang truong doanh thu va xay dung thuong hieu cho doanh nghiep thuong mai dien tu.',
+                experiences: [
+                    { position: 'Digital Marketing Lead', date: '04/2021 - Hien tai', company: 'Tiki Corporation', desc: '<ul><li>Quan ly ngan sach marketing 5 ty/thang, ROI dat 350%</li><li>Chay chien dich Google Ads va Facebook Ads tang 40% traffic</li><li>Xay dung content strategy mang 2M followers</li></ul>' },
+                    { position: 'Marketing Executive', date: '07/2019 - 03/2021', company: 'Shopee Vietnam', desc: '<ul><li>Plan va execute chien dich mega sale 11.11, 12.12</li><li>Phan tich du lieu user behavior de toi uu hoa funnel</li></ul>' }
+                ],
+                education: [{ school: 'Dai hoc Kinh te TP.HCM', major: 'Quan tri Kinh doanh', date: '2015 - 2019 | GPA: 3.4/4.0' }],
+                skills: [{ name: 'Google Ads / Facebook Ads', pct: 92 }, { name: 'SEO / SEM', pct: 85 }, { name: 'Content Marketing', pct: 88 }, { name: 'Analytics (GA4, Mixpanel)', pct: 80 }, { name: 'Email Marketing', pct: 75 }],
+                languages: [{ name: 'Tieng Anh', level: 'IELTS 7.5' }],
+                hobbies: ['Choi guitar', 'Blog ve marketing', 'Du lich'],
+                references: [{ name: 'Vo Van Minh', role: 'CMO - Tiki', contact: 'minh.vv@tiki.vn' }],
+                avatar: 'https://picsum.photos/seed/cv-marketing-spec/200/200.jpg'
+            },
+            {
+                _name: 'CV Data Analyst',
+                name: 'Do Thu Ha', title: 'Data Analyst',
+                phone: '0965 789 012', email: 'ha.do@email.com',
+                address: 'Ha Dong, Ha Noi', linkedin: 'linkedin.com/in/hado',
+                objective: 'Khai thac gia tri tu du lieu thong qua phan tich, mo hinh hoa va trinh bay truc quan de ho tro quyet dinh kinh doanh chinh xac.',
+                experiences: [
+                    { position: 'Data Analyst', date: '09/2021 - Hien tai', company: 'Momo Joint Stock', desc: '<ul><li>Xay dung dashboard Power BI theo doi KPI cho 50+ chi nhanh</li><li>Phat hien mau gian lan gian luan thong qua phan tich bat thuong</li><li>Tao mo hinh du doan churn customer do chinh xac 87%</li></ul>' },
+                    { position: 'Business Intelligence Intern', date: '01/2021 - 08/2021', company: 'Viettel Group', desc: '<ul><li>Thiet ke va bao cao ETL hang ngay cho phong kinh doanh</li><li>Viet SQL query phuc vu yeu cau phan tich tu 10+ phong ban</li></ul>' }
+                ],
+                education: [{ school: 'Dai hoc Kinh te Quoc dan', major: 'Thong ke Kinh te', date: '2017 - 2021 | GPA: 3.8/4.0' }],
+                skills: [{ name: 'Python / Pandas', pct: 88 }, { name: 'SQL (PostgreSQL, BigQuery)', pct: 92 }, { name: 'Power BI / Tableau', pct: 85 }, { name: 'Excel / Google Sheets', pct: 95 }, { name: 'Machine Learning (Basic)', pct: 65 }],
+                languages: [{ name: 'Tieng Anh', level: 'IELTS 8.0' }, { name: 'Tieng Phap', level: 'B2' }],
+                hobbies: ['Sudoku', 'Doc bao kinh te', 'Choi banh ro'],
+                references: [{ name: 'Le Duc Anh', role: 'Head of Data - Momo', contact: 'anh.ld@momo.vn' }],
+                avatar: 'https://picsum.photos/seed/cv-data-analyst/200/200.jpg'
+            }
+        ];
+    }
+
+    // Lấy danh sách tên CV
+    function getCVNames() {
+        const names = JSON.parse(localStorage.getItem(STORAGE_PREFIX + 'names') || 'null');
+        if (names && names.length === MAX_CVS) return names;
+        const templates = getCVTemplates();
+        return templates.map(t => t._name);
+    }
+
+    function saveCVNames(names) {
+        localStorage.setItem(STORAGE_PREFIX + 'names', JSON.stringify(names));
+    }
+
+    // Lưu/Load data từng CV
+    function loadCVData(index) {
+        try {
+            const s = localStorage.getItem(STORAGE_PREFIX + 'data_' + index);
+            if (s) return JSON.parse(s);
+        } catch(e) {}
+        // Lấy template nếu chưa có
+        const templates = getCVTemplates();
+        return JSON.parse(JSON.stringify(templates[index] || templates[0]));
+    }
+
+    function saveCVDataAtIndex(index, data) {
+        localStorage.setItem(STORAGE_PREFIX + 'data_' + index, JSON.stringify(data));
+    }
+
+    // Kiểm tra CV đã được tạo (đã sửa) hay chưa
+    function isCVCreated(index) {
+        return localStorage.getItem(STORAGE_PREFIX + 'data_' + index) !== null;
+    }
+
+    // ===== Render Tabs =====
+    function renderTabs() {
+        const bar = document.getElementById('cvTabsBar');
+        const names = getCVNames();
+        let html = '';
+        for (let i = 0; i < MAX_CVS; i++) {
+            const created = isCVCreated(i);
+            const active = i === currentCVIndex ? 'active' : '';
+            const empty = !created ? 'empty' : '';
+            const displayName = names[i] || ('CV ' + (i + 1));
+            html += `<button class="cv-tab ${active} ${empty}" onclick="switchCV(${i})" title="${displayName}">
+                <span class="cv-tab-num">${i + 1}</span>
+                <span class="cv-tab-name">${displayName}</span>
+                <button class="tab-edit-btn" onclick="event.stopPropagation();openRenameModal(${i})" title="Doi ten"><i class="fas fa-pen"></i></button>
+                <button class="tab-del-btn" onclick="event.stopPropagation();resetCVAtIndex(${i})" title="Dat lai"><i class="fas fa-undo"></i></button>
+            </button>`;
+        }
+        html += '<div class="cv-tabs-spacer"></div>';
+        bar.innerHTML = html;
+    }
+
+    // ===== Chuyển CV =====
+    function switchCV(index) {
+        if (index === currentCVIndex) return;
+        // Lưu CV hiện tại trước khi chuyển
+        if (isEditing) {
+            saveCVDataAtIndex(currentCVIndex, collectCVData());
+            toggleEdit();
+        } else {
+            saveCVDataAtIndex(currentCVIndex, collectCVData());
+        }
+        currentCVIndex = index;
+        const data = loadCVData(index);
+        renderCV(data);
+        renderTabs();
+        document.getElementById('cvArea').scrollTo({ top: 0, behavior: 'smooth' });
+        const names = getCVNames();
+        showToast('Da chuyen sang: ' + (names[index] || 'CV ' + (index + 1)), 'info');
+    }
+
+    // ===== Đổi tên CV =====
+    function openRenameModal(index) {
+        renameTargetIndex = index;
+        const names = getCVNames();
+        document.getElementById('renameInput').value = names[index] || ('CV ' + (index + 1));
+        document.getElementById('renameModalOverlay').classList.add('show');
+        setTimeout(() => { const inp = document.getElementById('renameInput'); inp.focus(); inp.select(); }, 200);
+    }
+
+    function closeRenameModal() {
+        document.getElementById('renameModalOverlay').classList.remove('show');
+        renameTargetIndex = -1;
+    }
+
+    function doRename() {
+        const val = document.getElementById('renameInput').value.trim();
+        if (!val) return;
+        const names = getCVNames();
+        names[renameTargetIndex] = val;
+        saveCVNames(names);
+        renderTabs();
+        closeRenameModal();
+        showToast('Da doi ten CV thanh: ' + val, 'success');
+    }
+
+    // ===== Đặt lại 1 CV =====
+    function resetCVAtIndex(index) {
+        const templates = getCVTemplates();
+        const defaultData = JSON.parse(JSON.stringify(templates[index]));
+        saveCVDataAtIndex(index, defaultData);
+        // Cũng reset tên
+        const names = getCVNames();
+        names[index] = defaultData._name;
+        saveCVNames(names);
+        if (index === currentCVIndex) {
+            if (isEditing) toggleEdit();
+            renderCV(defaultData);
+        }
+        renderTabs();
+        showToast('Da dat lai CV ' + (index + 1), 'info');
+    }
+
+    // ===== Render CV (giữ nguyên) =====
+    function setText(sel, text) { const el = document.querySelector(sel); if (el) el.textContent = text; }
+
+    function renderCV(data) {
+        ['name','title','phone','email','address','linkedin','objective'].forEach(f => setText(`[data-field="${f}"]`, data[f]));
+        if (data.avatar) document.getElementById('avatarImg').src = data.avatar;
+        renderExperiences(data.experiences);
+        renderEducation(data.education);
+        renderSkills(data.skills);
+        renderLanguages(data.languages);
+        renderHobbies(data.hobbies);
+        renderReferences(data.references);
+    }
+
+    function renderExperiences(exps) {
+        const c = document.getElementById('experienceList'); c.innerHTML = '';
+        exps.forEach((e, i) => { c.innerHTML += `<div class="cv-experience-item" data-exp-id="${i}"><button class="remove-item-btn" onclick="removeExperience(${i})"><i class="fas fa-times"></i></button><div class="cv-exp-header"><span class="cv-exp-position editable" data-field="exp${i}_position">${e.position}</span><span class="cv-exp-date editable" data-field="exp${i}_date">${e.date}</span></div><div class="cv-exp-company editable" data-field="exp${i}_company">${e.company}</div><div class="cv-exp-desc editable" data-field="exp${i}_desc">${e.desc}</div></div>`; });
+    }
+    function renderEducation(edus) {
+        const c = document.getElementById('educationList'); c.innerHTML = '';
+        edus.forEach((e, i) => { c.innerHTML += `<div class="cv-education-item" data-edu-id="${i}"><button class="remove-item-btn" onclick="removeEducation(${i})"><i class="fas fa-times"></i></button><div class="cv-edu-school editable" data-field="edu${i}_school">${e.school}</div><div class="cv-edu-major editable" data-field="edu${i}_major">${e.major}</div><div class="cv-edu-date editable" data-field="edu${i}_date">${e.date}</div></div>`; });
+    }
+    function renderSkills(skills) {
+        const c = document.getElementById('skillsList'); c.innerHTML = '';
+        skills.forEach((s, i) => { c.innerHTML += `<div class="cv-skill-item" data-skill-id="${i}"><button class="remove-item-btn" onclick="removeSkill(${i})"><i class="fas fa-times"></i></button><div class="cv-skill-name"><span class="editable" data-field="skill${i}_name">${s.name}</span><span class="skill-pct" data-pct="${s.pct}">${s.pct}%</span></div><div class="cv-skill-bar"><div class="cv-skill-fill" style="width:${s.pct}%"></div></div><input type="range" class="skill-slider hidden" min="0" max="100" value="${s.pct}" oninput="updateSkillBar(this)"></div>`; });
+    }
+    function renderLanguages(langs) {
+        const c = document.getElementById('languagesList'); c.innerHTML = '';
+        langs.forEach((l, i) => { c.innerHTML += `<div class="cv-lang-item" data-lang-id="${i}"><button class="remove-item-btn" onclick="removeLanguage(${i})"><i class="fas fa-times"></i></button><span class="editable" data-field="lang${i}_name">${l.name}</span><span class="cv-lang-level editable" data-field="lang${i}_level">${l.level}</span></div>`; });
+    }
+    function renderHobbies(hobbies) {
+        const c = document.getElementById('hobbiesContainer'); c.innerHTML = '';
+        hobbies.forEach((h, i) => { c.innerHTML += `<span class="cv-hobby-item editable" data-field="hobby${i}">${h}</span>`; });
+    }
+    function renderReferences(refs) {
+        const c = document.getElementById('referencesList'); c.innerHTML = '';
+        refs.forEach((r, i) => { c.innerHTML += `<div class="cv-ref-item" data-ref-id="${i}"><button class="remove-item-btn" onclick="removeReference(${i})"><i class="fas fa-times"></i></button><div class="cv-ref-name editable" data-field="ref${i}_name">${r.name}</div><div class="cv-ref-role editable" data-field="ref${i}_role">${r.role}</div><div class="cv-ref-contact editable" data-field="ref${i}_contact">${r.contact}</div></div>`; });
+    }
+
+    // ===== Thu thập dữ liệu =====
+    function getVal(f) { const el = document.querySelector(`[data-field="${f}"]`); return el ? el.textContent.trim() : ''; }
+    function getHTML(f) { const el = document.querySelector(`[data-field="${f}"]`); return el ? el.innerHTML.trim() : ''; }
+
+    function collectCVData() {
+        const data = {};
+        ['name','title','phone','email','address','linkedin','objective'].forEach(f => data[f] = getVal(f));
+        data.experiences = [];
+        document.querySelectorAll('.cv-experience-item').forEach((_, i) => { data.experiences.push({ position: getVal(`exp${i}_position`), date: getVal(`exp${i}_date`), company: getVal(`exp${i}_company`), desc: getHTML(`exp${i}_desc`) }); });
+        data.education = [];
+        document.querySelectorAll('.cv-education-item').forEach((_, i) => { data.education.push({ school: getVal(`edu${i}_school`), major: getVal(`edu${i}_major`), date: getVal(`edu${i}_date`) }); });
+        data.skills = [];
+        document.querySelectorAll('.cv-skill-item').forEach((item, i) => { const sl = item.querySelector('.skill-slider'); data.skills.push({ name: getVal(`skill${i}_name`), pct: sl ? parseInt(sl.value) : parseInt(item.querySelector('.skill-pct')?.dataset.pct || 50) }); });
+        data.languages = [];
+        document.querySelectorAll('.cv-lang-item').forEach((_, i) => { data.languages.push({ name: getVal(`lang${i}_name`), level: getVal(`lang${i}_level`) }); });
+        data.hobbies = [];
+        document.querySelectorAll('.cv-hobby-item').forEach(el => data.hobbies.push(el.textContent.trim()));
+        data.references = [];
+        document.querySelectorAll('.cv-ref-item').forEach((_, i) => { data.references.push({ name: getVal(`ref${i}_name`), role: getVal(`ref${i}_role`), contact: getVal(`ref${i}_contact`) }); });
+        data.avatar = document.getElementById('avatarImg').src;
+        return data;
+    }
+
+    // ===== Chỉnh sửa =====
+    function toggleEdit() {
+        isEditing = !isEditing;
+        const paper = document.getElementById('cvPaper');
+        const toolbar = document.getElementById('editToolbar');
+        const fab = document.getElementById('submitFab');
+        const banner = document.getElementById('submitBanner');
+        if (isEditing) {
+            paper.classList.add('editing'); toolbar.classList.add('show');
+            if (fab) fab.style.display = 'none'; if (banner) banner.style.display = 'none';
+            document.getElementById('btnEdit').style.display = 'none';
+            document.getElementById('btnPreview').style.display = 'inline-flex';
+            document.querySelectorAll('.add-item-btn').forEach(b => b.classList.remove('hidden'));
+            document.querySelectorAll('.skill-slider').forEach(s => s.classList.remove('hidden'));
+            document.querySelectorAll('.editable').forEach(el => el.setAttribute('contenteditable', 'true'));
+            showToast('Da bat che do chinh sua', 'info');
+        } else {
+            paper.classList.remove('editing'); toolbar.classList.remove('show');
+            if (fab) fab.style.display = ''; if (banner) banner.style.display = '';
+            document.getElementById('btnEdit').style.display = 'inline-flex';
+            document.getElementById('btnPreview').style.display = 'none';
+            document.querySelectorAll('.add-item-btn').forEach(b => b.classList.add('hidden'));
+            document.querySelectorAll('.skill-slider').forEach(s => s.classList.add('hidden'));
+            document.querySelectorAll('.editable').forEach(el => { el.setAttribute('contenteditable', 'false'); el.blur(); });
+        }
+    }
+
+    function reEnableEditing() {
+        setTimeout(() => {
+            if (!isEditing) return;
+            document.querySelectorAll('.editable').forEach(el => el.setAttribute('contenteditable', 'true'));
+            document.querySelectorAll('.add-item-btn').forEach(b => b.classList.remove('hidden'));
+            document.querySelectorAll('.skill-slider').forEach(s => s.classList.remove('hidden'));
+        }, 10);
+    }
+
+    function saveCV() {
+        const ind = document.getElementById('savingIndicator');
+        ind.classList.add('show');
+        saveCVDataAtIndex(currentCVIndex, collectCVData());
+        setTimeout(() => { ind.classList.remove('show'); showToast('CV da duoc luu!', 'success'); }, 500);
+    }
+
+    function downloadPDF() {
+        if (isEditing) toggleEdit();
+        showToast('Dang chuan bi PDF...', 'info');
+        setTimeout(() => window.print(), 300);
+    }
+
+    function updateSkillBar(slider) {
+        const item = slider.closest('.cv-skill-item');
+        item.querySelector('.cv-skill-fill').style.width = slider.value + '%';
+        const pct = item.querySelector('.skill-pct');
+        pct.textContent = slider.value + '%'; pct.dataset.pct = slider.value;
+    }
+
+    function addExperience() { const d = collectCVData(); d.experiences.push({ position: 'Vi tri moi', date: 'Thang/Nam - Thang/Nam', company: 'Ten cong ty', desc: '<ul><li>Mo ta cong viec...</li></ul>' }); saveCVDataAtIndex(currentCVIndex, d); renderCV(d); if (isEditing) reEnableEditing(); }
+    function removeExperience(i) { const d = collectCVData(); d.experiences.splice(i, 1); saveCVDataAtIndex(currentCVIndex, d); renderCV(d); if (isEditing) reEnableEditing(); }
+    function addEducation() { const d = collectCVData(); d.education.push({ school: 'Ten truong', major: 'Chuyen nganh', date: 'Nam - Nam' }); saveCVDataAtIndex(currentCVIndex, d); renderCV(d); if (isEditing) reEnableEditing(); }
+    function removeEducation(i) { const d = collectCVData(); d.education.splice(i, 1); saveCVDataAtIndex(currentCVIndex, d); renderCV(d); if (isEditing) reEnableEditing(); }
+    function addSkill() { const d = collectCVData(); d.skills.push({ name: 'Ky nang moi', pct: 50 }); saveCVDataAtIndex(currentCVIndex, d); renderCV(d); if (isEditing) reEnableEditing(); }
+    function removeSkill(i) { const d = collectCVData(); d.skills.splice(i, 1); saveCVDataAtIndex(currentCVIndex, d); renderCV(d); if (isEditing) reEnableEditing(); }
+    function addLanguage() { const d = collectCVData(); d.languages.push({ name: 'Ngoai ngu', level: 'Trung binh' }); saveCVDataAtIndex(currentCVIndex, d); renderCV(d); if (isEditing) reEnableEditing(); }
+    function removeLanguage(i) { const d = collectCVData(); d.languages.splice(i, 1); saveCVDataAtIndex(currentCVIndex, d); renderCV(d); if (isEditing) reEnableEditing(); }
+    function addHobby() { const d = collectCVData(); d.hobbies.push('So thich moi'); saveCVDataAtIndex(currentCVIndex, d); renderCV(d); if (isEditing) reEnableEditing(); }
+    function addReference() { const d = collectCVData(); d.references.push({ name: 'Ho va ten', role: 'Chuc vu - Cong ty', contact: 'email@example.com' }); saveCVDataAtIndex(currentCVIndex, d); renderCV(d); if (isEditing) reEnableEditing(); }
+    function removeReference(i) { const d = collectCVData(); d.references.splice(i, 1); saveCVDataAtIndex(currentCVIndex, d); renderCV(d); if (isEditing) reEnableEditing(); }
+
+    // ===== Drawer =====
+    function openDrawer() { document.getElementById('drawer').classList.add('open'); document.getElementById('drawerOverlay').classList.add('show'); document.body.style.overflow = 'hidden'; }
+    function closeDrawer() { document.getElementById('drawer').classList.remove('open'); document.getElementById('drawerOverlay').classList.remove('show'); document.body.style.overflow = ''; }
+
+    function setupSidebar(container) {
+        container.querySelectorAll('.sidebar-item[data-section]').forEach(item => {
+            item.addEventListener('click', () => {
+                document.querySelectorAll('.sidebar-item[data-section]').forEach(i => i.classList.remove('active'));
+                document.querySelectorAll(`.sidebar-item[data-section="${item.dataset.section}"]`).forEach(i => i.classList.add('active'));
+                closeDrawer();
+                const section = item.dataset.section;
+                if (section === 'all') { document.getElementById('cvArea').scrollTo({ top: 0, behavior: 'smooth' }); }
+                else {
+                    const target = document.getElementById('section' + section.charAt(0).toUpperCase() + section.slice(1));
+                    if (target) {
+                        const cvArea = document.getElementById('cvArea');
+                        const aR = cvArea.getBoundingClientRect(); const tR = target.getBoundingClientRect();
+                        cvArea.scrollBy({ top: tR.top - aR.top - 10, behavior: 'smooth' });
+                        target.style.transition = 'box-shadow 0.3s'; target.style.boxShadow = '0 0 0 3px rgba(13,124,102,0.3)';
+                        setTimeout(() => { target.style.boxShadow = ''; }, 1500);
+                    }
+                }
+            });
+        });
+    }
+
+    function openSectionModal() {
+        document.getElementById('modalBody').innerHTML = `<p style="margin-bottom:14px;color:var(--text-muted);font-size:13px;">Chon loai muc ban muon them:</p><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;"><button class="btn btn-outline" style="justify-content:center;padding:12px;color:var(--text);border-color:var(--border);" onclick="quickAdd('experience')"><i class="fas fa-briefcase"></i> Kinh nghiem</button><button class="btn btn-outline" style="justify-content:center;padding:12px;color:var(--text);border-color:var(--border);" onclick="quickAdd('education')"><i class="fas fa-graduation-cap"></i> Hoc van</button><button class="btn btn-outline" style="justify-content:center;padding:12px;color:var(--text);border-color:var(--border);" onclick="quickAdd('skill')"><i class="fas fa-cogs"></i> Ky nang</button><button class="btn btn-outline" style="justify-content:center;padding:12px;color:var(--text);border-color:var(--border);" onclick="quickAdd('language')"><i class="fas fa-language"></i> Ngoai ngu</button><button class="btn btn-outline" style="justify-content:center;padding:12px;color:var(--text);border-color:var(--border);" onclick="quickAdd('hobby')"><i class="fas fa-heart"></i> So thich</button><button class="btn btn-outline" style="justify-content:center;padding:12px;color:var(--text);border-color:var(--border);" onclick="quickAdd('reference')"><i class="fas fa-user-tie"></i> Tham chieu</button></div>`;
+        document.getElementById('modalTitle').textContent = 'Them muc moi';
+        document.getElementById('modalSaveBtn').style.display = 'none';
+        document.getElementById('modalOverlay').classList.add('show');
+    }
+    function quickAdd(type) { closeModal(); const map = { experience: addExperience, education: addEducation, skill: addSkill, language: addLanguage, hobby: addHobby, reference: addReference }; if (map[type]) map[type](); }
+    function closeModal() { document.getElementById('modalOverlay').classList.remove('show'); }
+
+    // ===== Nộp CV =====
+    function openSubmitModal() {
+        saveCVDataAtIndex(currentCVIndex, collectCVData());
+        document.getElementById('submitForm').classList.remove('hidden');
+        document.getElementById('submitSuccess').classList.remove('show');
+        document.getElementById('submitFooter').style.display = '';
+        document.getElementById('applyPosition').value = '';
+        document.getElementById('applyCompany').value = '';
+        document.getElementById('applyEmail').value = '';
+        document.getElementById('applyPhone').value = '';
+        document.getElementById('applyNote').value = '';
+        document.getElementById('applyType').value = 'fulltime';
+        clearErrors();
+        const cvTitle = getVal('title');
+        if (cvTitle) document.getElementById('applyPosition').value = cvTitle;
+        document.getElementById('submitModalOverlay').classList.add('show');
+    }
+    function closeSubmitModal() { document.getElementById('submitModalOverlay').classList.remove('show'); }
+    function clearErrors() { document.querySelectorAll('.error-msg').forEach(e => e.classList.remove('show')); document.querySelectorAll('.error').forEach(e => e.classList.remove('error')); }
+    function doSubmitCV() {
+        clearErrors(); let valid = true;
+        const position = document.getElementById('applyPosition').value.trim();
+        const company = document.getElementById('applyCompany').value.trim();
+        const email = document.getElementById('applyEmail').value.trim();
+        if (!position) { document.getElementById('applyPosition').classList.add('error'); document.getElementById('errPosition').classList.add('show'); valid = false; }
+        if (!company) { document.getElementById('applyCompany').classList.add('error'); document.getElementById('errCompany').classList.add('show'); valid = false; }
+        if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { document.getElementById('applyEmail').classList.add('error'); document.getElementById('errEmail').classList.add('show'); valid = false; }
+        if (!valid) return;
+        const btn = document.getElementById('btnDoSubmit'); btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Dang gui...';
+        const history = JSON.parse(localStorage.getItem('cvSubmitHistory') || '[]');
+        history.unshift({ position, company, email, phone: document.getElementById('applyPhone').value.trim(), type: document.getElementById('applyType').value, note: document.getElementById('applyNote').value.trim(), date: new Date().toISOString(), applicantName: getVal('name') });
+        localStorage.setItem('cvSubmitHistory', JSON.stringify(history));
+        setTimeout(() => {
+            btn.disabled = false; btn.innerHTML = '<i class="fas fa-paper-plane"></i> Gui CV';
+            document.getElementById('submitForm').classList.add('hidden');
+            document.getElementById('submitSuccess').classList.add('show');
+            document.getElementById('submitFooter').style.display = 'none';
+            document.getElementById('sentTo').textContent = company + ' - ' + email;
+        }, 1500);
+    }
+
+    // ===== Avatar =====
+    function setupAvatar() {
+        const wrapper = document.getElementById('avatarWrapper');
+        const input = document.getElementById('avatarInput');
+        const img = document.getElementById('avatarImg');
+        wrapper.addEventListener('click', () => { if (isEditing) input.click(); });
+        input.addEventListener('change', (e) => {
+            const file = e.target.files[0]; if (!file) return;
+            if (!file.type.startsWith('image/')) { showToast('Vui long chon file anh.', 'error'); return; }
+            const reader = new FileReader();
+            reader.onload = (ev) => { img.src = ev.target.result; showToast('Anh dai dien da cap nhat!', 'success'); };
+            reader.readAsDataURL(file);
+        });
+    }
+
+    function showToast(msg, type = 'info') {
+        const c = document.getElementById('toastContainer');
+        const t = document.createElement('div');
+        t.className = `toast toast-${type}`;
+        const icons = { success: 'fa-check-circle', info: 'fa-info-circle', error: 'fa-exclamation-circle' };
+        t.innerHTML = `<i class="fas ${icons[type] || icons.info}"></i> ${msg}`;
+        c.appendChild(t);
+        setTimeout(() => { if (t.parentNode) t.remove(); }, 3000);
+    }
+
+    function resetCurrentCV() {
+        if (isEditing) toggleEdit();
+        const templates = getCVTemplates();
+        const d = JSON.parse(JSON.stringify(templates[currentCVIndex]));
+        saveCVDataAtIndex(currentCVIndex, d);
+        const names = getCVNames(); names[currentCVIndex] = d._name; saveCVNames(names);
+        renderCV(d); renderTabs();
+        showToast('Da dat lai CV nay.', 'info');
+    }
+
+    // Auto-save
+    setInterval(() => { if (isEditing) saveCVDataAtIndex(currentCVIndex, collectCVData()); }, 30000);
+
+    // Keyboard
+    document.addEventListener('keydown', (e) => {
+        if ((e.ctrlKey || e.metaKey) && e.key === 's') { e.preventDefault(); saveCV(); }
+        if (e.key === 'Escape') {
+            if (document.getElementById('submitModalOverlay').classList.contains('show')) closeSubmitModal();
+            else if (document.getElementById('renameModalOverlay').classList.contains('show')) closeRenameModal();
+            else if (document.getElementById('modalOverlay').classList.contains('show')) closeModal();
+            else if (document.getElementById('drawer').classList.contains('open')) closeDrawer();
+            else if (isEditing) toggleEdit();
+        }
+        if (e.key === 'Enter' && document.getElementById('renameModalOverlay').classList.contains('show')) doRename();
+    });
+
+    // Khởi tạo
+    document.addEventListener('DOMContentLoaded', () => {
+        // Đảm bảo tên CV đã được lưu
+        const names = getCVNames();
+        saveCVNames(names);
+
+        // Load CV hiện tại
+        renderCV(loadCVData(currentCVIndex));
+        renderTabs();
+
+        setupSidebar(document.getElementById('sidebar'));
+        setupSidebar(document.getElementById('drawer'));
+        document.getElementById('menuToggle').addEventListener('click', openDrawer);
+        document.getElementById('drawerClose').addEventListener('click', closeDrawer);
+        document.getElementById('drawerOverlay').addEventListener('click', closeDrawer);
+        document.getElementById('btnEdit').addEventListener('click', toggleEdit);
+        document.getElementById('btnPreview').addEventListener('click', toggleEdit);
+        document.getElementById('btnSave').addEventListener('click', saveCV);
+        document.getElementById('btnDownload').addEventListener('click', downloadPDF);
+        document.getElementById('btnReset').addEventListener('click', resetCurrentCV);
+        document.getElementById('btnResetDrawer').addEventListener('click', () => { closeDrawer(); resetCurrentCV(); });
+        document.getElementById('modalOverlay').addEventListener('click', (e) => { if (e.target === e.currentTarget) closeModal(); });
+        document.getElementById('submitModalOverlay').addEventListener('click', (e) => { if (e.target === e.currentTarget) closeSubmitModal(); });
+        document.getElementById('renameModalOverlay').addEventListener('click', (e) => { if (e.target === e.currentTarget) closeRenameModal(); });
+        setupAvatar();
+
+        ['applyPosition', 'applyCompany', 'applyEmail'].forEach(id => {
+            document.getElementById(id).addEventListener('input', function() {
+                this.classList.remove('error');
+                const errId = 'err' + id.replace('apply', '');
+                const errEl = document.getElementById(errId);
+                if (errEl) errEl.classList.remove('show');
+            });
+        });
+
+        setTimeout(() => showToast('Ban co 5 CV. Chuyển tab de chuyen doi.', 'info'), 500);
+    });
+</script>
+</body>
+</html>
